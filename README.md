@@ -32,6 +32,7 @@ Disponível apenas na versão de desenvolvimento.
 
 
 [python](https://www.python.org/)
+
 [psycopg](http://initd.org/psycopg/)
 
 [postgre](https://www.postgresql.org/)
