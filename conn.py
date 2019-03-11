@@ -1,3 +1,4 @@
+#!/usr/bin/python2.7
 # -*- coding: utf-8 -*-
 import psycopg2
 
@@ -15,39 +16,56 @@ def consulta(sql):
 
 
 # consulta para recuperar os 3 artigos mais visitados
-sql_1 = " SELECT    a.title,"\
-        "           count(l.path):: INTEGER as views"\
-        " FROM  log l"\
-        " JOIN articles a"\
-        "       ON substring(l.path, 10) = a.slug"\
-        " WHERE (method ilike 'get')"\
-        "       AND (status ilike '%200 ok%')"\
-        " GROUP BY a.title"\
-        " ORDER BY a.title DESC LIMIT 3;"
+sql_1 = """ SELECT  articles.title,
+                    count(log.path):: INTEGER as views
+            FROM  log
+            JOIN articles
+               ON log.path = CONCAT('/article/', articles.slug)
+            WHERE (method ILIKE 'get')
+               AND (status ILIKE '%200 ok%')
+            GROUP BY articles.title
+            ORDER BY views DESC
+            LIMIT 3;"""
 
 
 # consulta para recuperar os autores mais populares
-sql_2 = " SELECT au.name,"\
-        "      count(slug):: INTEGER as views"\
-        " FROM articles as a"\
-        " JOIN authors as au"\
-        " ON a.author = au.id"\
-        " INNER JOIN log as l"\
-        " ON a.slug = substring(l.path, 10)"\
-        " WHERE (l.status ilike '%200 ok%')"\
-        "       AND(l.method ilike 'get')"\
-        " GROUP BY au.name"\
-        " ORDER BY Views DESC LIMIT 5;"
+sql_2 = """ SELECT authors.name,
+              count(slug):: INTEGER as views
+            FROM articles
+            JOIN authors
+                ON articles.author = authors.id
+            INNER JOIN log
+                ON articles.slug = substring(log.path, 10)
+            WHERE (log.status ILIKE '%200 ok%')
+               AND(log.method ILIKE 'get')
+            GROUP BY authors.name
+            ORDER BY views DESC
+            LIMIT 5;"""
 
 
 # consulta para recuperar os dias com maior porcentagem de erro
-sql_3 = " SELECT  to_char(time, 'Mon dd, YYYY') as day,"\
-        " ((count(time)) / 100):: numeric(12,1)::text || '%' errors"\
-        " FROM log"\
-        " WHERE (status not ilike '%200 ok%')"\
-        " GROUP BY day"\
-        " ORDER BY errors;"
+sql_3 = """ SELECT  TO_CHAR(time, 'Mon dd, YYYY') AS day,
+                    ROUND( 100.0 * (
+                     CAST(
+                      SUM(
+                      CASE WHEN status not ilike '%200 ok%'
+                        THEN 1
+                        ELSE 0 END) AS decimal)/count(*)),
+                    2) AS contagem
+                    FROM log
+                    GROUP BY day
+                    HAVING
+                     ROUND(
+                      100.0 * (
+                       CAST(
+                        SUM(
+                         CASE WHEN status not ilike '%200 ok%'
+                          THEN 1
+                          ELSE 0 END) AS decimal) / count(*)),2) >1
+                    ORDER BY contagem DESC
+                    LIMIT 1;"""
 
+#Execução das consultas
 consulta(sql_1)
 consulta(sql_2)
 consulta(sql_3)
