@@ -1,4 +1,4 @@
-#!/usr/bin/python2.7
+# !/usr/bin/python
 # -*- coding: utf-8 -*-
 import psycopg2
 
@@ -11,7 +11,7 @@ def consulta(sql):
 
     result = cursor.fetchall()
     for item in result:
-        print(str(item).replace("(", "").replace(")",""))
+        print('%s %s' % (item[0], item[1]))
     con.close()
 
 
@@ -65,7 +65,8 @@ sql_3 = """ SELECT  TO_CHAR(time, 'Mon dd, YYYY') AS day,
                     ORDER BY contagem DESC
                     LIMIT 1;"""
 
-#Execução das consultas
+
+# Execução das consultas
 consulta(sql_1)
 consulta(sql_2)
 consulta(sql_3)
